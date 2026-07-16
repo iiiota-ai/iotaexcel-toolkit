@@ -5,6 +5,7 @@
   "version": "1.0.0",
   "publisher": "iota",
   "license": "MIT",
+  "icon": "resources/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/iiiota-ai/iotaexcel-toolkit.git"
@@ -243,12 +244,15 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package",
+    "icon": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generateIcon.ps1",
+    "checksum": "node scripts/writeChecksum.js dist/*.vsix",
+    "package": "node scripts/packageVsix.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
     "@types/node": "^20.19.8",
     "@types/vscode": "1.90.0",
+    "@vscode/vsce": "^3.9.2",
     "typescript": "^5.8.3"
   }
 }

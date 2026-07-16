@@ -1,14 +1,15 @@
 .agents/**
 .codex/**
+.github/**
 .git/**
 .vscode/**
 .vscode-test/**
 .npm-cache/**
 node_modules/**
+scripts/**
 src/**
 tsconfig.json
 package-lock.json
-out/**/*.map
 *.vsix
 *.log
 npm-debug.log*
@@ -24,10 +25,15 @@ Thumbs.db
 .gitignore
 .vscodeignore
 
-!out/**
-out/**/*.map
+!out/**/*.js
+!out/*.js
 !bin/**
+!resources/**
 !README.md
 !CHANGELOG.md
 !LICENSE
 !package.json
+
+**/*.map
+out/**/*.map
+out/*.map
