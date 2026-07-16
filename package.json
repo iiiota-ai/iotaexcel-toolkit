@@ -1,0 +1,254 @@
+{
+  "name": "iotaexcel-toolkit",
+  "displayName": "IotaExcel ToolKit",
+  "description": "VS Code integration for IotaExcel convert, codegen, and .bytes preview workflows.",
+  "version": "1.0.0",
+  "publisher": "iota",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iiiota-ai/iotaexcel-toolkit.git"
+  },
+  "homepage": "https://github.com/iiiota-ai/iotaexcel-toolkit",
+  "bugs": {
+    "url": "https://github.com/iiiota-ai/iotaexcel-toolkit/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCustomEditor:iotaexcel-toolkit.bytesPreview",
+    "onCommand:iotaexcel-toolkit.convert",
+    "onCommand:iotaexcel-toolkit.codegen",
+    "onCommand:iotaexcel-toolkit.previewBytes",
+    "onCommand:iotaexcel-toolkit.convertToBytes",
+    "onCommand:iotaexcel-toolkit.convertToJson",
+    "onCommand:iotaexcel-toolkit.convertToCsv",
+    "onCommand:iotaexcel-toolkit.codegenCSharp",
+    "onCommand:iotaexcel-toolkit.showVersion"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "iotaexcel-toolkit.convert",
+        "title": "IotaExcel: Convert"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegen",
+        "title": "IotaExcel: Codegen"
+      },
+      {
+        "command": "iotaexcel-toolkit.previewBytes",
+        "title": "IotaExcel: Preview Bytes"
+      },
+      {
+        "command": "iotaexcel-toolkit.convertToBytes",
+        "title": "IotaExcel: Convert Excel to Bytes"
+      },
+      {
+        "command": "iotaexcel-toolkit.convertToJson",
+        "title": "IotaExcel: Convert Excel to JSON"
+      },
+      {
+        "command": "iotaexcel-toolkit.convertToCsv",
+        "title": "IotaExcel: Convert Excel to CSV"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenCSharp",
+        "title": "IotaExcel: Generate C# Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.showVersion",
+        "title": "IotaExcel: Show Tool Version"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "iotaexcel-toolkit.bytesPreview",
+        "displayName": "IotaExcel ToolKit Bytes Preview",
+        "selector": [
+          {
+            "filenamePattern": "*.bytes"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "configuration": {
+      "title": "IotaExcel ToolKit",
+      "properties": {
+        "iotaexcel-toolkit.toolPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path to the IotaExcel executable. When empty, the bundled executable is used."
+        },
+        "iotaexcel-toolkit.defaultTarget": {
+          "type": "string",
+          "enum": [
+            "both",
+            "client",
+            "server"
+          ],
+          "default": "both",
+          "description": "Default field target passed to IotaExcel."
+        },
+        "iotaexcel-toolkit.overwrite": {
+          "type": "boolean",
+          "default": true,
+          "description": "Overwrite generated output files."
+        },
+        "iotaexcel-toolkit.checkRef": {
+          "type": "boolean",
+          "default": false,
+          "description": "Check ref<T> target tables and keys during convert/codegen."
+        },
+        "iotaexcel-toolkit.selfDescribingBytes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include field names and type names when converting to .bytes."
+        },
+        "iotaexcel-toolkit.sheet": {
+          "type": "string",
+          "default": "",
+          "description": "Optional sheet name or 1-based index."
+        },
+        "iotaexcel-toolkit.recursive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Scan input directories recursively."
+        },
+        "iotaexcel-toolkit.strict": {
+          "type": "boolean",
+          "default": true,
+          "description": "Fail the current file on schema errors."
+        },
+        "iotaexcel-toolkit.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "description": "Log level passed to IotaExcel."
+        },
+        "iotaexcel-toolkit.logFormat": {
+          "type": "string",
+          "enum": [
+            "text",
+            "json"
+          ],
+          "default": "text",
+          "description": "Log output format."
+        },
+        "iotaexcel-toolkit.logFile": {
+          "type": "string",
+          "default": "",
+          "description": "Optional log file path."
+        },
+        "iotaexcel-toolkit.package": {
+          "type": "string",
+          "default": "DataConfig",
+          "description": "Package or namespace used for codegen."
+        },
+        "iotaexcel-toolkit.convertConfigPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional key=value config file path for Convert."
+        },
+        "iotaexcel-toolkit.convertInputPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional input Excel file or directory for Convert. Overrides config file input."
+        },
+        "iotaexcel-toolkit.convertOutputPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional output directory for Convert. Overrides config file output."
+        },
+        "iotaexcel-toolkit.codegenConfigPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional key=value config file path for Codegen."
+        },
+        "iotaexcel-toolkit.codegenInputPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional input Excel file or directory for Codegen. Overrides config file input."
+        },
+        "iotaexcel-toolkit.codegenOutputPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional output directory for Codegen. Overrides config file output."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "iotaexcel-toolkit.showVersion",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.convertToBytes",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.convertToJson",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.convertToCsv",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenCSharp",
+          "when": "false"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "iotaexcel-toolkit.previewBytes",
+          "when": "resourceExtname == .bytes",
+          "group": "iotaexcel@0"
+        },
+        {
+          "command": "iotaexcel-toolkit.convertToBytes",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@1"
+        },
+        {
+          "command": "iotaexcel-toolkit.convertToJson",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@2"
+        },
+        {
+          "command": "iotaexcel-toolkit.convertToCsv",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@3"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenCSharp",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@4"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.8",
+    "@types/vscode": "1.90.0",
+    "typescript": "^5.8.3"
+  }
+}
