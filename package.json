@@ -20,17 +20,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCustomEditor:iotaexcel-toolkit.bytesPreview",
-    "onCommand:iotaexcel-toolkit.convert",
-    "onCommand:iotaexcel-toolkit.codegen",
-    "onCommand:iotaexcel-toolkit.previewBytes",
-    "onCommand:iotaexcel-toolkit.convertToBytes",
-    "onCommand:iotaexcel-toolkit.convertToJson",
-    "onCommand:iotaexcel-toolkit.convertToCsv",
-    "onCommand:iotaexcel-toolkit.codegenCSharp",
-    "onCommand:iotaexcel-toolkit.showVersion"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -61,6 +50,30 @@
       {
         "command": "iotaexcel-toolkit.codegenCSharp",
         "title": "IotaExcel: Generate C# Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenGo",
+        "title": "IotaExcel: Generate Go Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenCpp",
+        "title": "IotaExcel: Generate C++ Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenJava",
+        "title": "IotaExcel: Generate Java Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenJavaScript",
+        "title": "IotaExcel: Generate JavaScript Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenPython",
+        "title": "IotaExcel: Generate Python Reader Code"
+      },
+      {
+        "command": "iotaexcel-toolkit.codegenSwift",
+        "title": "IotaExcel: Generate Swift Reader Code"
       },
       {
         "command": "iotaexcel-toolkit.showVersion",
@@ -210,6 +223,30 @@
         {
           "command": "iotaexcel-toolkit.codegenCSharp",
           "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenGo",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenCpp",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenJava",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenJavaScript",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenPython",
+          "when": "false"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenSwift",
+          "when": "false"
         }
       ],
       "explorer/context": [
@@ -237,6 +274,36 @@
           "command": "iotaexcel-toolkit.codegenCSharp",
           "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
           "group": "iotaexcel@4"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenGo",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@5"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenCpp",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@6"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenJava",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@7"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenJavaScript",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@8"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenPython",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@9"
+        },
+        {
+          "command": "iotaexcel-toolkit.codegenSwift",
+          "when": "resourceExtname == .xlsx || explorerResourceIsFolder",
+          "group": "iotaexcel@10"
         }
       ]
     }

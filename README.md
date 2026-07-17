@@ -30,15 +30,15 @@ IotaExcel ToolKit 是一个 VS Code 插件，用于在编辑器中使用 IotaExc
 
 也可以在资源管理器中右键 `.xlsx` 文件或文件夹，直接执行 Convert 快捷命令。
 
-### 生成 C# 读取代码
+### 生成读取代码
 
 1. 执行 `IotaExcel: Codegen`。
-2. 选择语言，目前支持 `C#`。
+2. 选择语言，目前支持 `C#`、`Go`、`C++`、`Java`、`JavaScript`、`Python` 和 `Swift`。
 3. 如果没有在设置中配置 `codegenInputPath`，插件会让你选择 Excel 文件或目录。
 4. 如果没有在设置中配置 `codegenOutputPath`，插件会让你选择输出目录。
-5. 生成的 C# Reader 代码会写入指定输出目录。
+5. 生成的 Reader 代码会写入指定输出目录。
 
-也可以在资源管理器中右键 `.xlsx` 文件或文件夹，直接执行 C# Codegen 快捷命令。
+也可以在资源管理器中右键 `.xlsx` 文件或文件夹，直接执行各语言的 Codegen 快捷命令。
 
 ### 预览 `.bytes`
 

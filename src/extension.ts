@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { IotaBytesPreviewProvider } from './previewProvider';
 
 type ConvertFormat = 'bin' | 'json' | 'csv';
-type CodegenLanguage = 'csharp';
+type CodegenLanguage = 'csharp' | 'go' | 'cpp' | 'java' | 'javascript' | 'python' | 'swift';
 
 interface ToolkitConfig {
   toolPath: string;
@@ -47,6 +47,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('iotaexcel-toolkit.convertToJson', (uri?: vscode.Uri) => runConvert(context, 'json', uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.convertToCsv', (uri?: vscode.Uri) => runConvert(context, 'csv', uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.codegenCSharp', (uri?: vscode.Uri) => runCodegen(context, 'csharp', uri)),
+    vscode.commands.registerCommand('iotaexcel-toolkit.codegenGo', (uri?: vscode.Uri) => runCodegen(context, 'go', uri)),
+    vscode.commands.registerCommand('iotaexcel-toolkit.codegenCpp', (uri?: vscode.Uri) => runCodegen(context, 'cpp', uri)),
+    vscode.commands.registerCommand('iotaexcel-toolkit.codegenJava', (uri?: vscode.Uri) => runCodegen(context, 'java', uri)),
+    vscode.commands.registerCommand('iotaexcel-toolkit.codegenJavaScript', (uri?: vscode.Uri) => runCodegen(context, 'javascript', uri)),
+    vscode.commands.registerCommand('iotaexcel-toolkit.codegenPython', (uri?: vscode.Uri) => runCodegen(context, 'python', uri)),
+    vscode.commands.registerCommand('iotaexcel-toolkit.codegenSwift', (uri?: vscode.Uri) => runCodegen(context, 'swift', uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.showVersion', () => showVersion(context)),
   );
 }
@@ -120,6 +126,30 @@ async function pickCodegenLanguage(): Promise<CodegenLanguage | undefined> {
       label: 'C#',
       language: 'csharp' as const,
     },
+    {
+      label: 'Go',
+      language: 'go' as const,
+    },
+    {
+      label: 'C++',
+      language: 'cpp' as const,
+    },
+    {
+      label: 'Java',
+      language: 'java' as const,
+    },
+    {
+      label: 'JavaScript',
+      language: 'javascript' as const,
+    },
+    {
+      label: 'Python',
+      language: 'python' as const,
+    },
+    {
+      label: 'Swift',
+      language: 'swift' as const,
+    },
   ], {
     placeHolder: 'Language',
   });
@@ -163,7 +193,7 @@ async function runCodegen(context: vscode.ExtensionContext, language: CodegenLan
     return;
   }
 
-  const output = await resolveOutputPath(config.codegenOutputPath, 'Select output folder for generated C# files');
+  const output = await resolveOutputPath(config.codegenOutputPath, `Select output folder for generated ${codegenLanguageLabel(language)} files`);
   if (!output && !config.codegenConfigPath.trim()) {
     return;
   }
@@ -181,6 +211,25 @@ async function runCodegen(context: vscode.ExtensionContext, language: CodegenLan
   appendOptionalArg(args, 'output', output);
 
   await runTool(context, args, `IotaExcel codegen ${language}`);
+}
+
+function codegenLanguageLabel(language: CodegenLanguage): string {
+  switch (language) {
+    case 'csharp':
+      return 'C#';
+    case 'go':
+      return 'Go';
+    case 'cpp':
+      return 'C++';
+    case 'java':
+      return 'Java';
+    case 'javascript':
+      return 'JavaScript';
+    case 'python':
+      return 'Python';
+    case 'swift':
+      return 'Swift';
+  }
 }
 
 async function showVersion(context: vscode.ExtensionContext): Promise<void> {
