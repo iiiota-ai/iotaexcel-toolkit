@@ -2,7 +2,7 @@
   "name": "iotaexcel-toolkit",
   "displayName": "IotaExcel ToolKit",
   "description": "VS Code integration for IotaExcel convert, codegen, and .bytes preview workflows.",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "publisher": "iota",
   "license": "MIT",
   "icon": "resources/icon.png",
