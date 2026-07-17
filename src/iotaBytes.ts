@@ -3,6 +3,10 @@ export type IotaField = {
   name: string;
   type: string;
   kind: string;
+  flags: number;
+  key: boolean;
+  required: boolean;
+  unique: boolean;
 };
 
 export type IotaBytesFile = {
@@ -16,6 +20,9 @@ export type IotaBytesFile = {
 
 const bytesMagic = 'IOTB';
 const bytesFormatVersion = 1;
+const fieldFlagKey = 1;
+const fieldFlagRequired = 2;
+const fieldFlagUnique = 4;
 
 class ByteReader {
   private offset = 0;
@@ -115,6 +122,18 @@ class ByteReader {
 }
 
 export function parseIotaBytes(data: Uint8Array): IotaBytesFile {
+  try {
+    return parseIotaBytesWithOptions(data, true);
+  } catch (error) {
+    try {
+      return parseIotaBytesWithOptions(data, false);
+    } catch {
+      throw error;
+    }
+  }
+}
+
+function parseIotaBytesWithOptions(data: Uint8Array, readFieldFlags: boolean): IotaBytesFile {
   const reader = new ByteReader(data);
   const magic = reader.readAscii(bytesMagic.length);
   if (magic !== bytesMagic) {
@@ -137,7 +156,17 @@ export function parseIotaBytes(data: Uint8Array): IotaBytesFile {
     const fieldNo = toSafeNumber(reader.readUvarint(), 'field number');
     const name = selfDescribing ? reader.readString() : `field_${fieldNo}`;
     const type = selfDescribing ? reader.readString() : `wire`;
-    const field = { fieldNo, name, type, kind: parseKind(type) };
+    const flags = selfDescribing && readFieldFlags ? toSafeNumber(reader.readUvarint(), 'field flags') : 0;
+    const field = {
+      fieldNo,
+      name,
+      type,
+      kind: parseKind(type),
+      flags,
+      key: (flags & fieldFlagKey) !== 0,
+      required: (flags & fieldFlagRequired) !== 0,
+      unique: (flags & fieldFlagUnique) !== 0,
+    };
     fields.push(field);
     fieldsByNo.set(fieldNo, field);
   }

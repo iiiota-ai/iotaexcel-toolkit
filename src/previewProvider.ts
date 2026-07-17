@@ -239,7 +239,7 @@ export class IotaBytesPreviewProvider implements vscode.CustomReadonlyEditorProv
             return false;
           }
 
-          return [value, field.name, field.fieldNo, field.type].some((candidate) => matchesSearch(candidate));
+          return [value, field.name, displayFieldName(field), field.fieldNo, field.type, fieldFlagText(field)].some((candidate) => matchesSearch(candidate));
         }
 
         function formatDateTime(value) {
@@ -261,7 +261,7 @@ export class IotaBytesPreviewProvider implements vscode.CustomReadonlyEditorProv
         function headerCell(value, field, columnIndex) {
           const th = document.createElement('th');
           th.textContent = value;
-          th.title = 'fieldNo ' + field.fieldNo + (field.type ? ' / ' + field.type : '');
+          th.title = fieldTitle(field);
           if (columnIndex === selectedColumn) {
             th.classList.add('selectedColumn');
           }
@@ -319,14 +319,13 @@ export class IotaBytesPreviewProvider implements vscode.CustomReadonlyEditorProv
         function renderHeader() {
           const fieldNoRow = document.createElement('tr');
           fieldNoRow.append(labelCell('列号', 'configLabel'));
-          fieldNoRow.append(...data.fields.map((field, index) => headerCell(String(field.fieldNo), field, index + 1)));
+          fieldNoRow.append(...data.fields.map((field, index) => headerCell(displayFieldNo(field), field, index + 1)));
 
           const fieldNameRow = document.createElement('tr');
           fieldNameRow.className = 'fieldNameRow';
           fieldNameRow.append(labelCell('字段名', 'configLabel'));
           fieldNameRow.append(...data.fields.map((field, index) => {
-            const name = field.fieldNo === data.keyFieldNo ? field.name + '*' : field.name;
-            return headerCell(name, field, index + 1);
+            return headerCell(displayFieldName(field), field, index + 1);
           }));
 
           const typeRow = document.createElement('tr');
@@ -403,8 +402,8 @@ export class IotaBytesPreviewProvider implements vscode.CustomReadonlyEditorProv
 
           return data.fields.findIndex((field) => {
             const name = field.name.toLowerCase();
-            const keyName = field.fieldNo === data.keyFieldNo ? (field.name + '*').toLowerCase() : name;
-            return String(field.fieldNo) === value || name === value || keyName === value;
+            const displayName = displayFieldName(field).toLowerCase();
+            return String(field.fieldNo) === value || name === value || displayName === value;
           });
         }
 
@@ -465,12 +464,71 @@ export class IotaBytesPreviewProvider implements vscode.CustomReadonlyEditorProv
           const matches = [];
           data.rows.forEach((row, rowIndex) => {
             data.fields.forEach((field, fieldIndex) => {
-              if ([row[field.name], field.name, field.fieldNo, field.type].some((candidate) => matchesSearch(candidate))) {
+              if ([row[field.name], field.name, displayFieldName(field), field.fieldNo, field.type, fieldFlagText(field)].some((candidate) => matchesSearch(candidate))) {
                 matches.push({ rowIndex, columnIndex: fieldIndex + 1 });
               }
             });
           });
           return matches;
+        }
+
+        function displayFieldName(field) {
+          let name = field.name;
+          if (field.key || field.fieldNo === data.keyFieldNo) {
+            return name + '#';
+          }
+          if (field.unique) {
+            name += '!';
+          }
+          if (field.required) {
+            name += '*';
+          }
+          return name;
+        }
+
+        function displayFieldNo(field) {
+          return String(field.fieldNo) + ' (' + excelColumnName(field.fieldNo) + ')';
+        }
+
+        function excelColumnName(fieldNo) {
+          let value = Number(fieldNo);
+          if (!Number.isInteger(value) || value <= 0) {
+            return '';
+          }
+
+          let name = '';
+          while (value > 0) {
+            value -= 1;
+            name = String.fromCharCode(65 + (value % 26)) + name;
+            value = Math.floor(value / 26);
+          }
+          return name;
+        }
+
+        function fieldFlagText(field) {
+          const flags = [];
+          if (field.key || field.fieldNo === data.keyFieldNo) {
+            flags.push('key');
+          }
+          if (field.unique) {
+            flags.push('unique');
+          }
+          if (field.required) {
+            flags.push('required');
+          }
+          return flags.join(' ');
+        }
+
+        function fieldTitle(field) {
+          const parts = ['fieldNo ' + field.fieldNo];
+          if (field.type) {
+            parts.push(field.type);
+          }
+          const flags = fieldFlagText(field);
+          if (flags) {
+            parts.push(flags);
+          }
+          return parts.join(' / ');
         }
 
         function runSearch() {
