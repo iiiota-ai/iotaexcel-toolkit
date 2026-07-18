@@ -9,6 +9,8 @@ import { IotaBytesPreviewProvider } from './previewProvider';
 type ConvertFormat = 'bin' | 'json' | 'csv';
 type CodegenLanguage = 'csharp' | 'go' | 'cpp' | 'java' | 'javascript' | 'python' | 'swift';
 
+const defaultInitRoot = 'iotaexcel';
+
 interface ToolkitConfig {
   toolPath: string;
   defaultTarget: 'both' | 'client' | 'server';
@@ -40,6 +42,7 @@ export function activate(context: vscode.ExtensionContext): void {
         retainContextWhenHidden: true,
       },
     }),
+    vscode.commands.registerCommand('iotaexcel-toolkit.init', () => initWorkspace()),
     vscode.commands.registerCommand('iotaexcel-toolkit.convert', (uri?: vscode.Uri) => runInteractiveConvert(context, uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.codegen', (uri?: vscode.Uri) => runInteractiveCodegen(context, uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.previewBytes', (uri?: vscode.Uri) => openBytesPreview(uri)),
@@ -84,6 +87,74 @@ async function openBytesPreview(uri?: vscode.Uri): Promise<void> {
   }
 
   await vscode.commands.executeCommand('vscode.openWith', target, IotaBytesPreviewProvider.viewType);
+}
+
+async function initWorkspace(): Promise<void> {
+  const workspaceFolder = await pickWorkspaceFolder();
+  if (!workspaceFolder) {
+    return;
+  }
+
+  const root = await vscode.window.showInputBox({
+    title: 'IotaExcel workspace root',
+    prompt: 'Generated folders will be grouped under this workspace-relative directory.',
+    value: defaultInitRoot,
+    validateInput: validateWorkspaceRelativePath,
+  });
+  if (!root) {
+    return;
+  }
+
+  const packageName = await vscode.window.showInputBox({
+    title: 'IotaExcel package or namespace',
+    prompt: 'Used for C# namespace, Go/Java package, or C++ namespace during codegen.',
+    value: getConfig().packageName,
+  });
+  if (packageName === undefined) {
+    return;
+  }
+
+  const normalizedRoot = normalizeWorkspaceRelativePath(root);
+  const paths = initPaths(normalizedRoot);
+  const settingsUri = vscode.Uri.joinPath(workspaceFolder.uri, '.vscode', 'settings.json');
+  const settings = initSettings(paths, packageName);
+
+  if (hasExistingInitSettings()) {
+    const overwrite = await vscode.window.showWarningMessage(
+      'Existing IotaExcel workspace path settings were found. Overwrite them?',
+      { modal: true },
+      'Overwrite',
+    );
+    if (overwrite !== 'Overwrite') {
+      return;
+    }
+  }
+
+  await Promise.all([
+    ensureWorkspaceDirectory(workspaceFolder, paths.excelInput),
+    ensureWorkspaceDirectory(workspaceFolder, paths.dataOutput),
+    ensureWorkspaceDirectory(workspaceFolder, paths.codegenOutput),
+  ]);
+
+  await updateWorkspaceSettings(settings);
+
+  const openSettings = 'Open Settings';
+  const convertNow = 'Convert Now';
+  const codegenNow = 'Codegen Now';
+  const picked = await vscode.window.showInformationMessage(
+    `IotaExcel workspace initialized under ${normalizedRoot}.`,
+    openSettings,
+    convertNow,
+    codegenNow,
+  );
+
+  if (picked === openSettings) {
+    await vscode.window.showTextDocument(settingsUri);
+  } else if (picked === convertNow) {
+    await vscode.commands.executeCommand('iotaexcel-toolkit.convert');
+  } else if (picked === codegenNow) {
+    await vscode.commands.executeCommand('iotaexcel-toolkit.codegen');
+  }
 }
 
 async function pickBytesPreviewTarget(): Promise<vscode.Uri | undefined> {
@@ -156,15 +227,105 @@ async function pickCodegenLanguage(): Promise<CodegenLanguage | undefined> {
   return picked?.language;
 }
 
+async function pickWorkspaceFolder(): Promise<vscode.WorkspaceFolder | undefined> {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders?.length) {
+    vscode.window.showErrorMessage('Open a workspace folder before initializing IotaExcel.');
+    return undefined;
+  }
+
+  if (folders.length === 1) {
+    return folders[0];
+  }
+
+  const picked = await vscode.window.showQuickPick(folders.map((folder) => ({
+    label: folder.name,
+    description: folder.uri.fsPath,
+    folder,
+  })), {
+    placeHolder: 'Select workspace folder to initialize',
+  });
+  return picked?.folder;
+}
+
+function validateWorkspaceRelativePath(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return 'Enter a workspace-relative directory.';
+  }
+  if (path.isAbsolute(trimmed)) {
+    return 'Use a workspace-relative directory.';
+  }
+  const normalized = path.posix.normalize(trimmed.replace(/\\/g, '/'));
+  if (normalized === '.' || normalized.startsWith('../') || normalized === '..') {
+    return 'Directory must stay inside the workspace.';
+  }
+  return undefined;
+}
+
+function normalizeWorkspaceRelativePath(value: string): string {
+  return path.posix.normalize(value.trim().replace(/\\/g, '/')).replace(/\/$/, '');
+}
+
+function initPaths(root: string): { excelInput: string; dataOutput: string; codegenOutput: string } {
+  return {
+    excelInput: path.posix.join(root, 'excels'),
+    dataOutput: path.posix.join(root, 'generated', 'data'),
+    codegenOutput: path.posix.join(root, 'generated', 'code'),
+  };
+}
+
+function workspaceSettingPath(relativePath: string): string {
+  return `\${workspaceFolder}/${relativePath}`;
+}
+
+async function ensureWorkspaceDirectory(workspaceFolder: vscode.WorkspaceFolder, relativePath: string): Promise<void> {
+  await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(workspaceFolder.uri, ...relativePath.split('/')));
+}
+
+function initSettings(
+  paths: { excelInput: string; dataOutput: string; codegenOutput: string },
+  packageName: string,
+): Record<string, string> {
+  return {
+    convertInputPath: workspaceSettingPath(paths.excelInput),
+    convertOutputPath: workspaceSettingPath(paths.dataOutput),
+    codegenInputPath: workspaceSettingPath(paths.excelInput),
+    codegenOutputPath: workspaceSettingPath(paths.codegenOutput),
+    package: packageName.trim() || 'DataConfig',
+  };
+}
+
+async function updateWorkspaceSettings(settings: Record<string, string>): Promise<void> {
+  const config = vscode.workspace.getConfiguration('iotaexcel-toolkit');
+  await Promise.all(Object.entries(settings).map(([key, value]) => (
+    config.update(key, value, vscode.ConfigurationTarget.Workspace)
+  )));
+}
+
+function hasExistingInitSettings(): boolean {
+  const config = vscode.workspace.getConfiguration('iotaexcel-toolkit');
+  return [
+    'convertInputPath',
+    'convertOutputPath',
+    'codegenInputPath',
+    'codegenOutputPath',
+  ].some((key) => {
+    const inspected = config.inspect<string>(key);
+    return typeof inspected?.workspaceValue === 'string' && inspected.workspaceValue.trim().length > 0;
+  });
+}
+
 async function runConvert(context: vscode.ExtensionContext, format: ConvertFormat, uri?: vscode.Uri): Promise<void> {
   const config = getConfig();
   const input = await resolveInputPath(config.convertInputPath, uri);
-  if (!input && !config.convertConfigPath.trim()) {
+  const configPath = resolveConfiguredPath(config.convertConfigPath);
+  if (!input && !configPath) {
     return;
   }
 
   const output = await resolveOutputPath(config.convertOutputPath, `Select output folder for ${format === 'bin' ? '.bytes' : format.toUpperCase()} files`);
-  if (!output && !config.convertConfigPath.trim()) {
+  if (!output && !configPath) {
     return;
   }
 
@@ -175,7 +336,7 @@ async function runConvert(context: vscode.ExtensionContext, format: ConvertForma
     ...commonOptionArgs(config),
   ];
 
-  appendOptionalArg(args, 'config', config.convertConfigPath);
+  appendOptionalArg(args, 'config', configPath);
   appendOptionalArg(args, 'input', input);
   appendOptionalArg(args, 'output', output);
 
@@ -189,12 +350,13 @@ async function runConvert(context: vscode.ExtensionContext, format: ConvertForma
 async function runCodegen(context: vscode.ExtensionContext, language: CodegenLanguage, uri?: vscode.Uri): Promise<void> {
   const config = getConfig();
   const input = await resolveInputPath(config.codegenInputPath, uri);
-  if (!input && !config.codegenConfigPath.trim()) {
+  const configPath = resolveConfiguredPath(config.codegenConfigPath);
+  if (!input && !configPath) {
     return;
   }
 
   const output = await resolveOutputPath(config.codegenOutputPath, `Select output folder for generated ${codegenLanguageLabel(language)} files`);
-  if (!output && !config.codegenConfigPath.trim()) {
+  if (!output && !configPath) {
     return;
   }
 
@@ -206,7 +368,7 @@ async function runCodegen(context: vscode.ExtensionContext, language: CodegenLan
     ...commonOptionArgs(config),
   ];
 
-  appendOptionalArg(args, 'config', config.codegenConfigPath);
+  appendOptionalArg(args, 'config', configPath);
   appendOptionalArg(args, 'input', input);
   appendOptionalArg(args, 'output', output);
 
@@ -240,7 +402,7 @@ async function showVersion(context: vscode.ExtensionContext): Promise<void> {
 }
 
 async function resolveInputPath(configuredPath: string, uri?: vscode.Uri): Promise<string | undefined> {
-  const configured = configuredPath.trim();
+  const configured = resolveConfiguredPath(configuredPath);
   if (configured) {
     return configured;
   }
@@ -263,7 +425,7 @@ async function resolveInputPath(configuredPath: string, uri?: vscode.Uri): Promi
 }
 
 async function resolveOutputPath(configuredPath: string, title: string): Promise<string | undefined> {
-  const configured = configuredPath.trim();
+  const configured = resolveConfiguredPath(configuredPath);
   if (configured) {
     return configured;
   }
@@ -316,7 +478,7 @@ function commonOptionArgs(config: ToolkitConfig): string[] {
     args.push('--sheet', sheet);
   }
 
-  const logFile = config.logFile.trim();
+  const logFile = resolveConfiguredPath(config.logFile);
   if (logFile) {
     args.push('--log-file', logFile);
   }
@@ -332,7 +494,7 @@ function appendOptionalArg(args: string[], name: string, value: string | undefin
 }
 
 function resolveToolPath(context: vscode.ExtensionContext): string {
-  const configuredPath = getConfig().toolPath.trim();
+  const configuredPath = resolveConfiguredPath(getConfig().toolPath);
   if (configuredPath) {
     return configuredPath;
   }
@@ -417,6 +579,22 @@ function runTool(
 
 function workspaceCwd(): string | undefined {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+}
+
+function resolveConfiguredPath(value: string | undefined): string {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!workspaceFolder) {
+    return trimmed;
+  }
+
+  return trimmed
+    .replace(/\$\{workspaceFolder\}/g, workspaceFolder)
+    .replace(/\$\{workspaceRoot\}/g, workspaceFolder);
 }
 
 function quoteArg(value: string): string {

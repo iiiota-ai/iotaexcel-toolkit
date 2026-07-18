@@ -24,6 +24,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "iotaexcel-toolkit.init",
+        "title": "IotaExcel: Init Workspace"
+      },
+      {
         "command": "iotaexcel-toolkit.convert",
         "title": "IotaExcel: Convert"
       },
