@@ -42,7 +42,7 @@ export function activate(context: vscode.ExtensionContext): void {
         retainContextWhenHidden: true,
       },
     }),
-    vscode.commands.registerCommand('iotaexcel-toolkit.init', () => initWorkspace()),
+    vscode.commands.registerCommand('iotaexcel-toolkit.init', () => initWorkspace(context)),
     vscode.commands.registerCommand('iotaexcel-toolkit.convert', (uri?: vscode.Uri) => runInteractiveConvert(context, uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.codegen', (uri?: vscode.Uri) => runInteractiveCodegen(context, uri)),
     vscode.commands.registerCommand('iotaexcel-toolkit.previewBytes', (uri?: vscode.Uri) => openBytesPreview(uri)),
@@ -89,7 +89,7 @@ async function openBytesPreview(uri?: vscode.Uri): Promise<void> {
   await vscode.commands.executeCommand('vscode.openWith', target, IotaBytesPreviewProvider.viewType);
 }
 
-async function initWorkspace(): Promise<void> {
+async function initWorkspace(context: vscode.ExtensionContext): Promise<void> {
   const workspaceFolder = await pickWorkspaceFolder();
   if (!workspaceFolder) {
     return;
@@ -135,6 +135,7 @@ async function initWorkspace(): Promise<void> {
     ensureWorkspaceDirectory(workspaceFolder, paths.dataOutput),
     ensureWorkspaceDirectory(workspaceFolder, paths.codegenOutput),
   ]);
+  await copyDemoWorkbook(context, workspaceFolder, paths.excelInput);
 
   await updateWorkspaceSettings(settings);
 
@@ -281,6 +282,24 @@ function workspaceSettingPath(relativePath: string): string {
 
 async function ensureWorkspaceDirectory(workspaceFolder: vscode.WorkspaceFolder, relativePath: string): Promise<void> {
   await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(workspaceFolder.uri, ...relativePath.split('/')));
+}
+
+async function copyDemoWorkbook(
+  context: vscode.ExtensionContext,
+  workspaceFolder: vscode.WorkspaceFolder,
+  excelInputPath: string,
+): Promise<void> {
+  const source = vscode.Uri.file(context.asAbsolutePath(path.join('resources', 'Demo.xlsx')));
+  const target = vscode.Uri.joinPath(workspaceFolder.uri, ...excelInputPath.split('/'), 'Demo.xlsx');
+
+  try {
+    await vscode.workspace.fs.stat(target);
+    return;
+  } catch {
+    // Missing target is expected on first init; copy below will surface other failures.
+  }
+
+  await vscode.workspace.fs.copy(source, target, { overwrite: false });
 }
 
 function initSettings(
